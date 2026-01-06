@@ -187,4 +187,5 @@ int main(const int argc, const char *const argv[]) {
   for (const char *const *domainp = po_file_domains(file); *domainp; domainp++)
     msgstat_print_for_domain(file, domainp);
   po_file_free(file);
+  return 0;
 }
