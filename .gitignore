@@ -1,2 +1,3 @@
 /msgstat
 /test_leak
+/memory-leak/test_leak
