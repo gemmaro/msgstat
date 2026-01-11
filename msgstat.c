@@ -60,18 +60,6 @@ typedef struct msgstat_stat {
          MSGSTAT_STAT_PERCENT(stat, fuzzy),                                    \
          MSGSTAT_STAT_PERCENT(stat, translated));
 
-/* Use later maybe? */
-void msgstat_stat_debug(msgstat_stat *const stat) {
-  const int all = MSGSTAT_STAT_ALL(stat);
-  fprintf(stderr, "*** all: %d\n", all);
-  fprintf(stderr, "*** untranslated: %d (%f)\n", stat->untranslated,
-          MSGSTAT_STAT_PERCENT(stat, untranslated));
-  fprintf(stderr, "*** translated: %d (%f)\n", stat->translated,
-          MSGSTAT_STAT_PERCENT(stat, fuzzy));
-  fprintf(stderr, "*** fuzzy: %d (%f)\n", stat->fuzzy,
-          MSGSTAT_STAT_PERCENT(stat, translated));
-}
-
 #define MSGSTAT_STAT_FROM_MESSAGE(message, stat)                               \
   if (strlen(po_message_msgstr(message))) {                                    \
     if (po_message_is_fuzzy(message))                                          \
