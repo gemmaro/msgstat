@@ -49,16 +49,28 @@ typedef struct msgstat_stat {
   stat->translated = 0;                                                        \
   stat->fuzzy = 0;
 
+#define MSGSTAT_STAT_FREE(stat) free(stat);
+
+void msgstat_stat_add(msgstat_stat *const stat,
+                      const msgstat_stat *const delta) {
+  stat->untranslated += delta->untranslated;
+  stat->translated += delta->translated;
+  stat->fuzzy += delta->fuzzy;
+}
+
 #define MSGSTAT_STAT_ALL(stat)                                                 \
   (stat->untranslated + stat->translated + stat->fuzzy)
 #define MSGSTAT_STAT_PERCENT(stat, field)                                      \
   ((double)stat->field / MSGSTAT_STAT_ALL(stat)) * 100
 
 #define MSGSTAT_STAT_PRINT(stat)                                               \
-  printf("u: %05.1f\tf: %05.1f\tt: %05.1f",                                    \
-         MSGSTAT_STAT_PERCENT(stat, untranslated),                             \
-         MSGSTAT_STAT_PERCENT(stat, fuzzy),                                    \
-         MSGSTAT_STAT_PERCENT(stat, translated));
+  stat->translated == MSGSTAT_STAT_ALL(stat)                                   \
+      ? printf("complete✔️")                                               \
+      : printf("u: %05.1f\tf: %05.1f\tt: %05.1f\trest: %d",                    \
+               MSGSTAT_STAT_PERCENT(stat, untranslated),                       \
+               MSGSTAT_STAT_PERCENT(stat, fuzzy),                              \
+               MSGSTAT_STAT_PERCENT(stat, translated),                         \
+               stat->untranslated + stat->fuzzy);
 
 #define MSGSTAT_STAT_FROM_MESSAGE(message, stat)                               \
   if (strlen(po_message_msgstr(message))) {                                    \
@@ -83,20 +95,28 @@ typedef struct msgstat_stats {
 
 #define MSGSTAT_STATS_FREE(stats)                                              \
   for (size_t index = 0; index < stats->size; index++)                         \
-    free(stats->stats[index]);                                                 \
+    MSGSTAT_STAT_FREE(stats->stats[index]);                                    \
   free(stats->filenames);                                                      \
   free(stats->stats);                                                          \
   free(stats);
 
 #define MSGSTAT_STATS_PRINT(stats)                                             \
-  if (!stats->size) {                                                          \
-    fputs("no data", stderr);                                                  \
-  } else                                                                       \
+  if (stats->size) {                                                           \
+    msgstat_stat *sum;                                                         \
+    MSGSTAT_STAT_CREATE(sum);                                                  \
     for (size_t index = 0; index < stats->size; index++) {                     \
       printf("%s:\t", stats->filenames[index]);                                \
       MSGSTAT_STAT_PRINT(stats->stats[index]);                                 \
       putchar('\n');                                                           \
-    }
+      msgstat_stat_add(sum, stats->stats[index]);                              \
+    }                                                                          \
+    printf("all:\t");                                                          \
+    MSGSTAT_STAT_PRINT(sum);                                                   \
+    putchar('\n');                                                             \
+    MSGSTAT_STAT_FREE(sum);                                                    \
+  } else {                                                                     \
+    fputs("no data", stderr);                                                  \
+  }
 
 void msgstat_stats_add_from_message_for_filename(const po_message_t message,
                                                  const char *const filename,
